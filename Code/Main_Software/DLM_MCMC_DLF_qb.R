@@ -28,8 +28,11 @@ defaultPrior_qb <- function( X ) {
   prior$beta$b <- rep( 0, nvar )
   prior$beta$v <- diag( 100, nvar )
   
-  # Gamma
+  # gamma
   prior$gamma <- c( 1, rep(0.5, nvar - 1) )
+  
+  # theta
+  prior$theta <- c( 0, 100, 1, 1 )
   
   # Return result
   prior
@@ -37,7 +40,7 @@ defaultPrior_qb <- function( X ) {
 }
 
 ### Function for creating default starting values for the MCMC algorithm
-defaultInit_qb <- function( X, group_len ) {
+defaultInit_dlf_qb <- function( X, group_len, dyn_len ) {
   
   # Setup
   nvar <- ncol( X )
@@ -49,13 +52,16 @@ defaultInit_qb <- function( X, group_len ) {
   # gamma
   init$gamma <- c( TRUE, rep(FALSE, group_len - 1) )
   
+  # theta
+  init$theta <- rep( list(c(0, -1)), dyn_len ) 
+  
   # Return result
-  init
+  init 
   
 }
 
 ### Main wrapper function for performing MCMC-based inference for the Negative Binomial DLM
-DLM_MCMC_qb <- function( formula, data = NULL, quantile = 0.5, groups = NULL, 
+DLM_MCMC_qb <- function( formula, data = NULL, quantile = 0.5, groups = NULL, dynamic = NULL, 
                          prior = NULL, init = NULL, nsamp = 5000, nburn = 5000, thin = 1 ) {
   
   ### Initialize
@@ -98,9 +104,13 @@ DLM_MCMC_qb <- function( formula, data = NULL, quantile = 0.5, groups = NULL,
   var_index_unique <- unique( groups )[-1] # Used when proposing new gamma values
   gammares[1, ][unlist(var_split[init$gamma])] <- TRUE
   gam <- gammares[1, ]
-  #var_sum <- length( unique(groups[gam]) )
   
   X <- X_full[, gam, drop = FALSE]
+  current_dynamic <- which( gam ) %in% dynamic
+  for ( i in seq_along(current_dynamic) ) {
+    
+  }
+  
   Xb <- X %*% init$beta[gam]
   V0i <- V0i_full[gam, gam]
   V0ib0 <- V0ib0_full[gam]
@@ -213,12 +223,10 @@ ppd_qr <- function( X_new, MCMC_res, scaling = FALSE ) {
   if ( scaling ) { X <- cbind( 1, apply( X_new, 2, scale ) ) }
   else { X <- cbind( 1, X_new ) }
   X <- as.matrix( X )
-  nvars <- 1:ncol( X )
   
   Xb <- tcrossprod( MCMC_res$beta, x = X )
-  pALD( Xb, p = MCMC_res$quantile )
-  test_p <- pALD( Xb, p = MCMC_res$quantile )
-  ppp <- apply( test_p, 1, mean )
+  test_p <- 1 - pALD( Xb, mu = 0, p = MCMC_res$quantile )
+  apply( test_p, 1, mean )
   
 }
 
