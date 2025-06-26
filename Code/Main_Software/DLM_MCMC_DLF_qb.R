@@ -225,7 +225,7 @@ ppd_qr <- function( X_new, MCMC_res, scaling = FALSE ) {
   X <- as.matrix( X )
   
   Xb <- tcrossprod( MCMC_res$beta, x = X )
-  test_p <- 1 - pALD( Xb, mu = 0, p = MCMC_res$quantile )
+  test_p <- 1 - pALD( 0, mu = Xb, p = MCMC_res$quantile )
   apply( test_p, 1, mean )
   
 }

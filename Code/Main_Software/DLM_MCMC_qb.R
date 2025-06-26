@@ -213,12 +213,10 @@ ppd_qr <- function( X_new, MCMC_res, scaling = FALSE ) {
   if ( scaling ) { X <- cbind( 1, apply( X_new, 2, scale ) ) }
   else { X <- cbind( 1, X_new ) }
   X <- as.matrix( X )
-  nvars <- 1:ncol( X )
   
   Xb <- tcrossprod( MCMC_res$beta, x = X )
-  pALD( Xb, p = MCMC_res$quantile )
-  test_p <- pALD( Xb, p = MCMC_res$quantile )
-  ppp <- apply( test_p, 1, mean )
+  test_p <- 1 - pALD( 0, mu = Xb, p = MCMC_res$quantile )
+  apply( test_p, 1, mean )
   
 }
 
